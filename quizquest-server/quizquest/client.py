@@ -14,25 +14,28 @@ class Client:
     async def process_messages(self) -> None:
         try:
             async with TaskGroup() as tg:
-                incoming_task = tg.create_task(self._process_incoming_messages())
-                tg.create_task(self._process_outgoing_messages(incoming_task))
+                outgoing_task = tg.create_task(self._process_outgoing_messages())
+                tg.create_task(self._process_incoming_messages(outgoing_task))
         except* ConnectionClosed:
             pass
 
-    async def _process_outgoing_messages(self, incoming_task: Task) -> None:
-        while not incoming_task.done():
+    async def _process_outgoing_messages(self) -> None:
+        while True:
             message = await self._outgoing_messages.get()
             await _send_message(self._ws, message)
             self._outgoing_messages.task_done()
 
-    async def _process_incoming_messages(self) -> None:
-        async for message in self._ws:
-            try:
-                message = Message.from_json(message)
-            except ValueError:
-                self.send_error('invalid_syntax')
-                continue
-            await self.handle_incoming_message(message)
+    async def _process_incoming_messages(self, outgoing_task: Task) -> None:
+        try:
+            async for message in self._ws:
+                try:
+                    message = Message.from_json(message)
+                except ValueError:
+                    self.send_error('invalid_syntax')
+                    continue
+                await self.handle_incoming_message(message)
+        finally:
+            outgoing_task.cancel()
 
     def send_message(self, message: Message) -> None:
         self._outgoing_messages.put_nowait(message)
@@ -52,4 +55,5 @@ async def _send_message(ws: WebSocketServerProtocol, message: Message) -> None:
 
 
 async def send_error(ws: WebSocketServerProtocol, code: str, **kwargs) -> None:
+    print(f'Sending error: {code}')
     await _send_message(ws, Message({'type': 'error', 'code': code} | kwargs))

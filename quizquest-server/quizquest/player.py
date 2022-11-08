@@ -13,6 +13,16 @@ if TYPE_CHECKING:
     from quizquest.game import Game
 
 
+def validate_name(name: str) -> bool:
+    if len(name) > 20 or len(name) == 0:
+        return False
+
+    name = normalize('NFD', name).lower()
+    name = ''.join([letter for letter in name if letter in ascii_lowercase])
+    words = {word for word in banned_words if word in name}
+    return not len(words)
+
+
 def get_banned_words() -> set[str]:
     with open('banned_words.txt', 'r') as f:
         return {word.strip() for word in f.readlines()}
@@ -30,13 +40,3 @@ class Player(Client):
 
     async def handle_incoming_message(self, message: Message) -> None:
         print(f"player '{self.name}' handling message: '{message}'")
-
-
-def validate_name(name: str) -> bool:
-    if len(name) > 20 or len(name) == 0:
-        return False
-
-    name = normalize('NFD', name).lower()
-    name = ''.join([letter for letter in name if letter in ascii_lowercase])
-    words = {word for word in banned_words if word in name}
-    return not len(words)

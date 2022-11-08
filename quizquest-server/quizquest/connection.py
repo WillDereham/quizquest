@@ -1,8 +1,6 @@
-from asyncio import wait, FIRST_COMPLETED, create_task
 from typing import cast
 from urllib.parse import urlparse, parse_qsl
 
-from websockets.exceptions import ConnectionClosedError
 from websockets.server import WebSocketServerProtocol
 
 from quizquest.client import send_error
@@ -38,8 +36,6 @@ async def handle_connection(ws: WebSocketServerProtocol) -> None:
 
 
 async def handle_player_connection(ws: WebSocketServerProtocol, code: int, name: str) -> None:
-    print(f"New connection for code: {code}, name: '{name}'")
-
     name = name.strip()
     if not validate_name(name):
         await send_error(ws, 'invalid_name')
@@ -58,9 +54,11 @@ async def handle_player_connection(ws: WebSocketServerProtocol, code: int, name:
     player = Player(ws, game, name)
     game.on_player_join(player)
     try:
+        print(f"{code}: Player '{name}' connected")
         player.send_message(Message({'type': 'connected'}))
         await player.process_messages()
     finally:
+        print(f"{code}: Player '{name}' disconnected")
         game.on_player_leave(player)
 
 
