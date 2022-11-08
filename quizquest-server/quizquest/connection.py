@@ -15,12 +15,14 @@ from quizquest.player import Player, validate_name
 async def handle_connection(ws: WebSocketServerProtocol) -> None:
     url = urlparse(ws.path)
     path = url.path
+    print(ws.path)
     query = cast(dict[str, str], dict(parse_qsl(url.query)))
     match path:
         case '/join':
             try:
                 code = int(query['code'])
             except (KeyError, ValueError):
+                print(f'invalid code: {query}')
                 await send_error(ws, 'invalid_code')
                 return
             try:
