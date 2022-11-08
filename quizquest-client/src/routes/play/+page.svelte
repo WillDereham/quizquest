@@ -27,7 +27,7 @@
 
 {#if $player !== null}
   <div class="h-full flex flex-col">
-    <div class="flex bg-violet-800 gap-6">
+    <div class="flex bg-violet-800 gap-6 h-20">
       <button class="flex items-center gap-3 p-6 hover:bg-violet-900 relative" on:click={copyLink}>
         <Fa icon={faLink} />
         <div class="font-mono">

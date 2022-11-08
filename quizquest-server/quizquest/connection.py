@@ -74,6 +74,7 @@ async def handle_manager_connection(ws: WebSocketServerProtocol) -> None:
         manager.send_message(Message({'type': 'game_created', 'code': code}))
         await manager.process_messages()
     finally:
+        print(f"Game with code {code} ended")
         for player in game.players.values():
             await player.disconnect()
         del games[code]

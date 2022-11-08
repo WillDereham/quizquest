@@ -45,7 +45,7 @@
         <div>Loading...</div>
       {:else}
         <h1 class="text-4xl">Join Game</h1>
-        <div class="flex flex-col gap-4 items-center">
+        <form class="flex flex-col gap-4 items-center" on:submit={onJoin}>
           <label class="flex flex-col gap-1">
             Code
             <input
@@ -72,7 +72,6 @@
             {/if}
           </label>
           <button
-            on:click={onJoin}
             class="py-4 px-6 bg-teal-700 text-center rounded-lg text-lg disabled:opacity-50"
             disabled={code.length != 5 || name.length === 0}
           >
@@ -81,7 +80,7 @@
           {#if error && !['game_not_found', 'name_taken', 'invalid_name'].includes(error)}
             <div class="text-red-500 text-sm">An error occurred: {error}</div>
           {/if}
-        </div>
+        </form>
       {/if}
     </div>
   </div>
