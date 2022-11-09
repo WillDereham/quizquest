@@ -1,4 +1,5 @@
 import { goto } from '$app/navigation'
+import { PUBLIC_GAME_URL } from '$env/static/public'
 import { get, writable } from 'svelte/store'
 
 interface Player {
@@ -22,7 +23,7 @@ export function joinGame(code: string, name: string) {
       return resolve(null)
     }
     const ws = new WebSocket(
-      `ws://localhost:8080/join?code=${code}&name=${encodeURIComponent(name)}`,
+      `${PUBLIC_GAME_URL}/join?code=${code}&name=${encodeURIComponent(name)}`,
     )
     player.set({ ws, code, name, status: 'waiting_for_start' })
 
@@ -45,6 +46,7 @@ export function joinGame(code: string, name: string) {
     ws.addEventListener('message', onInitialMessage)
     ws.addEventListener('error', onConnectionError)
     ws.addEventListener('close', () => {
+      console.log('Connection closed')
       player.set(null)
       goto('/join')
     })

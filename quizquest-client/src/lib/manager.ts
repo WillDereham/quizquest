@@ -1,4 +1,5 @@
 import { goto } from '$app/navigation'
+import { PUBLIC_GAME_URL } from '$env/static/public'
 import { get, writable } from 'svelte/store'
 
 export interface Manager {
@@ -50,7 +51,7 @@ export function startGame() {
       return resolve(null)
     }
 
-    const ws = new WebSocket('ws://localhost:8080/start')
+    const ws = new WebSocket(`${PUBLIC_GAME_URL}/start`)
 
     const onInitialMessage = (event: MessageEvent) => {
       ws.removeEventListener('message', onInitialMessage)

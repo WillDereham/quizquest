@@ -36,6 +36,7 @@
   "type": "module",
   "dependencies": {
     "@fortawesome/free-solid-svg-icons": "^6.2.0",
+    "@sveltejs/adapter-static": "^1.0.0-next.48",
     "qrcode": "^1.5.1",
     "svelte-fa": "^3.0.3"
   }
