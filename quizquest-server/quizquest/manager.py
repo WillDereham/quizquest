@@ -18,3 +18,14 @@ class Manager(Client):
 
     async def handle_incoming_message(self, message: Message) -> None:
         print(f"manager handling message: '{message}'")
+        match message.type:
+            case 'kick_player':
+                try:
+                    name: str = message['name']
+                except KeyError:
+                    self.send_error('invalid_name')
+                    return
+                await self.handle_kick_player(name)
+
+    async def handle_kick_player(self, name: str) -> None:
+        await self.game.kick_player(name)

@@ -59,7 +59,7 @@ async def handle_player_connection(ws: WebSocketServerProtocol, code: int, name:
         await player.process_messages()
     finally:
         print(f"{code}: Player '{name}' disconnected")
-        game.on_player_leave(player)
+        game.on_player_leave(name)
 
 
 async def handle_manager_connection(ws: WebSocketServerProtocol) -> None:

@@ -18,12 +18,21 @@ class Game:
         self.manager: Manager | None = None
         self.players: dict[str, Player] = {}
 
-    def on_player_leave(self, player: Player):
-        self.manager.send_message(Message({'type': 'player_left', 'name': player.name}))
-        del self.players[player.name]
+    def on_player_leave(self, name: str) -> None:
+        self.manager.send_message(Message({'type': 'player_left', 'name': name}))
+        del self.players[name]
 
-    def on_player_join(self, player: Player):
+    def on_player_join(self, player: Player) -> None:
         self.players[player.name] = player
         self.manager.send_message(
             Message({'type': 'player_joined', 'player': {'name': player.name}})
         )
+
+    async def kick_player(self, name: str) -> None:
+        try:
+            player = self.players[name]
+        except KeyError:
+            return
+
+        player.send_message(Message({'type': 'player_kicked'}))
+        await player.disconnect()

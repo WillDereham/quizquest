@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from '$app/stores'
-  import { manager, type ManagerPlayer } from '$lib/manager'
+  import { kickPlayer, manager, type ManagerPlayer } from '$lib/manager'
   import { getQRCodeURL } from '$lib/url'
   import { faXmark } from '@fortawesome/free-solid-svg-icons'
   import { onMount } from 'svelte'
@@ -14,8 +14,6 @@
   onMount(async () => {
     qrCodeURL = await getQRCodeURL($manager!.code)
   })
-
-  // TODO: remove players
 </script>
 
 {#if $manager !== null}
@@ -33,7 +31,10 @@
       <ul class="flex flex-wrap gap-2">
         {#each players as player}
           <li>
-            <button class="bg-cyan-500 py-2 px-4 flex rounded-md items-center gap-2 group">
+            <button
+              class="bg-cyan-500 py-2 px-4 flex rounded-md items-center gap-2 group"
+              on:click={(e) => kickPlayer(player.name)}
+            >
               {player.name}
               <Fa icon={faXmark} class="opacity-50 group-hover:opacity-100" />
             </button>

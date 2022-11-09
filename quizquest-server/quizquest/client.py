@@ -47,7 +47,10 @@ class Client:
         raise NotImplementedError()
 
     async def disconnect(self) -> None:
+        print('Disconnecting from client')
+        await self._outgoing_messages.join()
         await self._ws.close()
+        print('Disconnected from client')
 
 
 async def _send_message(ws: WebSocketServerProtocol, message: Message) -> None:

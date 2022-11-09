@@ -77,6 +77,12 @@ export function startGame() {
   })
 }
 
+export function kickPlayer(name: string) {
+  const ws = get(manager)?.ws
+  if (!ws) return
+  ws.send(JSON.stringify({ type: 'kick_player', name }))
+}
+
 export function endGame() {
   get(manager)?.ws.close()
   manager.set(null)
