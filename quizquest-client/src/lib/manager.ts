@@ -49,6 +49,7 @@ export function startGame() {
     if (get(manager) !== null) {
       return resolve(null)
     }
+
     const ws = new WebSocket('ws://localhost:8080/start')
 
     const onInitialMessage = (event: MessageEvent) => {

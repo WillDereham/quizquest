@@ -26,8 +26,12 @@ export function joinGame(code: string, name: string) {
     )
     player.set({ ws, code, name, status: 'waiting_for_start' })
 
+    const onConnectionError = () => {
+      return reject('connection_error')
+    }
     const onInitialMessage = (event: MessageEvent) => {
       ws.removeEventListener('message', onInitialMessage)
+      ws.removeEventListener('error', onConnectionError)
       const data = JSON.parse(event.data)
       console.log(data)
       if (data.type === 'connected') {
@@ -39,6 +43,7 @@ export function joinGame(code: string, name: string) {
       return reject('unknown_error')
     }
     ws.addEventListener('message', onInitialMessage)
+    ws.addEventListener('error', onConnectionError)
     ws.addEventListener('close', () => {
       player.set(null)
       goto('/join')
