@@ -17,10 +17,10 @@
     loading = true
     error = null
     try {
-      await joinGame(code, name).catch(async (e: string) => {
-        error = e
-      })
+      await joinGame(code, name)
       goto('/play')
+    } catch (e: unknown) {
+      error = e as string
     } finally {
       loading = false
     }
