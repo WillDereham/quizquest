@@ -19,15 +19,28 @@ function onMessage(event: MessageEvent) {
   console.debug('Message received:', message)
   switch (message.type) {
     case 'player_joined':
-      get(manager)?.players.set(message.player.name, message.player)
-      manager.update((manager) => manager)
-      console.log(get(manager)?.players)
+      onPlayerJoin(message)
       break
     case 'player_left':
+      onPlayerLeave(message)
       break
     default:
       console.warn('Received unknown message:', message)
   }
+}
+
+function onPlayerJoin(message: { player: { name: string } }) {
+  const players = get(manager)?.players
+  if (!players) return
+  players.set(message.player.name, message.player)
+  manager.update((manager) => manager)
+}
+
+function onPlayerLeave(message: { name: string }) {
+  const players = get(manager)?.players
+  if (!players) return
+  players.delete(message.name)
+  manager.update((manager) => manager)
 }
 
 export function startGame() {
