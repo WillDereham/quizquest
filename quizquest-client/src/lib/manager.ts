@@ -1,29 +1,40 @@
 import { goto } from '$app/navigation'
 import { get, writable } from 'svelte/store'
 
-interface Manager {
+export interface Manager {
   ws: WebSocket
   code: string
   players: Map<string, ManagerPlayer>
   status: 'waiting_for_start'
 }
 
-interface ManagerPlayer {
+export interface ManagerPlayer {
   name: string
 }
 
 export const manager = writable<Manager | null>(null)
 
 function onMessage(event: MessageEvent) {
-  const data = JSON.parse(event.data)
-  console.log('Message received:', data)
+  const message = JSON.parse(event.data)
+  console.debug('Message received:', message)
+  switch (message.type) {
+    case 'player_joined':
+      get(manager)?.players.set(message.player.name, message.player)
+      manager.update((manager) => manager)
+      console.log(get(manager)?.players)
+      break
+    case 'player_left':
+      break
+    default:
+      console.warn('Received unknown message:', message)
+  }
 }
 
 export function startGame() {
   return new Promise((resolve, reject) => {
     console.log({ manager: get(manager) })
     if (get(manager) !== null) {
-      resolve(null)
+      return resolve(null)
     }
     const ws = new WebSocket('ws://localhost:8080/start')
 
@@ -39,11 +50,11 @@ export function startGame() {
           players: new Map<string, ManagerPlayer>(),
           status: 'waiting_for_start',
         })
-        resolve(null)
+        return resolve(null)
       } else if (data.type === 'error') {
-        reject(data.code)
+        return reject(data.code)
       }
-      reject('unknown_error')
+      return reject('unknown_error')
     }
     ws.addEventListener('message', onInitialMessage)
     ws.addEventListener('close', () => {

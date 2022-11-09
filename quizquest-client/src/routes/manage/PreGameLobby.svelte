@@ -1,12 +1,15 @@
 <script lang="ts">
   import { page } from '$app/stores'
-  import { manager } from '$lib/manager'
+  import { manager, type ManagerPlayer } from '$lib/manager'
   import { getQRCodeURL } from '$lib/url'
   import { faXmark } from '@fortawesome/free-solid-svg-icons'
   import { onMount } from 'svelte'
   import Fa from 'svelte-fa'
 
   let qrCodeURL: string | null = null
+
+  let players: ManagerPlayer[]
+  $: players = [...$manager!.players.values()].reverse()
 
   onMount(async () => {
     qrCodeURL = await getQRCodeURL($manager!.code)
@@ -28,90 +31,14 @@
     </div>
     <div class="row-start-2 col-start-1 overflow-y-scroll p-8">
       <ul class="flex flex-wrap gap-2">
-        <li>
-          <button class="bg-cyan-500 py-2 px-4 flex rounded-md items-center gap-2 group">
-            will
-            <Fa icon={faXmark} class="opacity-50 group-hover:opacity-100" />
-          </button>
-        </li>
-        <li>
-          <button class="bg-cyan-500 py-2 px-4 flex rounded-md items-center gap-2 group">
-            oli
-            <Fa icon={faXmark} class="opacity-50 group-hover:opacity-100" />
-          </button>
-        </li>
-        <li>
-          <button class="bg-cyan-500 py-2 px-4 flex rounded-md items-center gap-2 group">
-            megan
-            <Fa icon={faXmark} class="opacity-50 group-hover:opacity-100" />
-          </button>
-        </li>
-        <li>
-          <button class="bg-cyan-500 py-2 px-4 flex rounded-md items-center gap-2 group">
-            amber
-            <Fa icon={faXmark} class="opacity-50 group-hover:opacity-100" />
-          </button>
-        </li>
-        <li>
-          <button class="bg-cyan-500 py-2 px-4 flex rounded-md items-center gap-2 group">
-            tom
-            <Fa icon={faXmark} class="opacity-50 group-hover:opacity-100" />
-          </button>
-        </li>
-        <li>
-          <button class="bg-cyan-500 py-2 px-4 flex rounded-md items-center gap-2 group">
-            baz
-            <Fa icon={faXmark} class="opacity-50 group-hover:opacity-100" />
-          </button>
-        </li>
-        <li>
-          <button class="bg-cyan-500 py-2 px-4 flex rounded-md items-center gap-2 group">
-            will
-            <Fa icon={faXmark} class="opacity-50 group-hover:opacity-100" />
-          </button>
-        </li>
-        <li>
-          <button class="bg-cyan-500 py-2 px-4 flex rounded-md items-center gap-2 group">
-            will
-            <Fa icon={faXmark} class="opacity-50 group-hover:opacity-100" />
-          </button>
-        </li>
-        <li>
-          <button class="bg-cyan-500 py-2 px-4 flex rounded-md items-center gap-2 group">
-            oli
-            <Fa icon={faXmark} class="opacity-50 group-hover:opacity-100" />
-          </button>
-        </li>
-        <li>
-          <button class="bg-cyan-500 py-2 px-4 flex rounded-md items-center gap-2 group">
-            megan
-            <Fa icon={faXmark} class="opacity-50 group-hover:opacity-100" />
-          </button>
-        </li>
-        <li>
-          <button class="bg-cyan-500 py-2 px-4 flex rounded-md items-center gap-2 group">
-            amber
-            <Fa icon={faXmark} class="opacity-50 group-hover:opacity-100" />
-          </button>
-        </li>
-        <li>
-          <button class="bg-cyan-500 py-2 px-4 flex rounded-md items-center gap-2 group">
-            tom
-            <Fa icon={faXmark} class="opacity-50 group-hover:opacity-100" />
-          </button>
-        </li>
-        <li>
-          <button class="bg-cyan-500 py-2 px-4 flex rounded-md items-center gap-2 group">
-            baz
-            <Fa icon={faXmark} class="opacity-50 group-hover:opacity-100" />
-          </button>
-        </li>
-        <li>
-          <button class="bg-cyan-500 py-2 px-4 flex rounded-md items-center gap-2 group">
-            will
-            <Fa icon={faXmark} class="opacity-50 group-hover:opacity-100" />
-          </button>
-        </li>
+        {#each players as player}
+          <li>
+            <button class="bg-cyan-500 py-2 px-4 flex rounded-md items-center gap-2 group">
+              {player.name}
+              <Fa icon={faXmark} class="opacity-50 group-hover:opacity-100" />
+            </button>
+          </li>
+        {/each}
       </ul>
     </div>
 

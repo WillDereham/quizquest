@@ -2,12 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="759cd156-6274-458b-9a98-c6bccd8ccc9c" name="Changes" comment="Fix idea project">
-      <change beforePath="$PROJECT_DIR$/../quizquest-client/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/../quizquest-client/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../quizquest-client/src/routes/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/../quizquest-client/src/routes/+page.svelte" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../quizquest-client/src/routes/manage/[code=code]/+page.svelte" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../quizquest-client/yarn.lock" beforeDir="false" afterPath="$PROJECT_DIR$/../quizquest-client/yarn.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../quizquest-client/src/lib/manager.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../quizquest-client/src/lib/manager.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/quizquest/connection.py" beforeDir="false" afterPath="$PROJECT_DIR$/quizquest/connection.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -68,7 +64,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1667898647314</updated>
-      <workItem from="1667898649159" duration="10635000" />
+      <workItem from="1667898649159" duration="12724000" />
     </task>
     <task id="LOCAL-00001" summary="Fix idea project">
       <created>1667898850049</created>

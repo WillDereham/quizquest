@@ -11,15 +11,15 @@ interface Player {
 export const player = writable<Player | null>(null)
 
 function onMessage(event: MessageEvent) {
-  const data = JSON.parse(event.data)
-  console.log('Message received:', data)
+  const message = JSON.parse(event.data)
+  console.log('Message received:', message)
 }
 
 export function joinGame(code: string, name: string) {
   return new Promise((resolve, reject) => {
     console.log({ player: get(player) })
     if (get(player) !== null) {
-      resolve(null)
+      return resolve(null)
     }
     const ws = new WebSocket(
       `ws://localhost:8080/join?code=${code}&name=${encodeURIComponent(name)}`,
@@ -32,11 +32,11 @@ export function joinGame(code: string, name: string) {
       console.log(data)
       if (data.type === 'connected') {
         ws.addEventListener('message', onMessage)
-        resolve(null)
+        return resolve(null)
       } else if (data.type === 'error') {
-        reject(data.code)
+        return reject(data.code)
       }
-      reject('unknown_error')
+      return reject('unknown_error')
     }
     ws.addEventListener('message', onInitialMessage)
     ws.addEventListener('close', () => {
