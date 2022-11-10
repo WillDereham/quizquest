@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 
 def validate_name(name: str) -> bool:
-    if len(name) > 20 or len(name) == 0:
+    if len(name) > 16 or len(name) == 0:
         return False
 
     name = normalize('NFD', name).lower()

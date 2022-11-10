@@ -9,7 +9,7 @@
   let code = ''
   $: code = code.replaceAll(/\D+/g, '').substring(0, 6)
   let name = ''
-  $: name = name.substring(0, 21)
+  $: name = name.substring(0, 16)
   let loading = false
   let error: string | null = null
 
