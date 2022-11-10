@@ -14,7 +14,7 @@ games = {}
 
 class Game:
     def __init__(self) -> None:
-        self.code = secrets.randbelow(90000) + 10000
+        self.code = secrets.randbelow(900000) + 100000
         self.manager: Manager | None = None
         self.players: dict[str, Player] = {}
 

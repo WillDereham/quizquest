@@ -7,7 +7,7 @@
   import { page } from '$app/stores'
 
   let code = ''
-  $: code = code.replaceAll(/\D+/g, '').substring(0, 5)
+  $: code = code.replaceAll(/\D+/g, '').substring(0, 6)
   let name = ''
   $: name = name.substring(0, 21)
   let loading = false
@@ -73,7 +73,7 @@
           </label>
           <button
             class="py-4 px-6 bg-teal-700 text-center rounded-lg text-lg disabled:opacity-50"
-            disabled={code.length != 5 || name.length === 0}
+            disabled={code.length != 6 || name.length === 0}
           >
             Join
           </button>
