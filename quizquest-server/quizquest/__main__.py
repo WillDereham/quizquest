@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from signal import SIGTERM
 
 import websockets
@@ -11,6 +12,10 @@ port = 8080
 
 
 async def main() -> None:
+    logging.basicConfig(
+        format="%(asctime)s %(message)s",
+        level=logging.DEBUG,
+    )
     loop = asyncio.get_running_loop()
     stop = loop.create_future()
     loop.add_signal_handler(SIGTERM, stop.set_result, None)

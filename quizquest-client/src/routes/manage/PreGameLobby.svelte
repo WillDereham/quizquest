@@ -17,7 +17,9 @@
 </script>
 
 {#if $manager !== null}
-  <div class="grid grid-cols-[1fr,auto] grid-rows-[auto,auto] max-h-[calc(100vh-5rem)]">
+  <div
+    class="grid grid-cols-1 md:grid-cols-[1fr,auto] grid-rows-[auto,auto] max-h-[calc(100vh-5rem)]"
+  >
     <div class="row-start-1 col-start-1 p-8 gap-2 flex flex-col">
       <div class="text-xl">
         Go to <span class="font-mono">{$page.url.host}/join</span>
@@ -43,7 +45,7 @@
       </ul>
     </div>
 
-    <div class="row-start-1 row-span-2 col-start-2 p-8 flex flex-col gap-4">
+    <div class="hidden md:flex row-start-1 row-span-2 col-start-2 p-8 flex-col gap-4">
       <div class="text-center text-xl">Scan QR code to join</div>
       {#if qrCodeURL}
         <img
