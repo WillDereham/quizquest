@@ -1,16 +1,15 @@
 from __future__ import annotations
 
 from string import ascii_lowercase
-from typing import TYPE_CHECKING
 from unicodedata import normalize
+from uuid import uuid4, UUID
 
 from websockets.legacy.server import WebSocketServerProtocol
 
-from quizquest.client import Client
+from quizquest.client import Client, require_game_status
 from quizquest.message import Message
 
-if TYPE_CHECKING:
-    from quizquest.game import Game
+from quizquest.game import Game, GameStatus
 
 
 def validate_name(name: str) -> bool:
@@ -33,10 +32,26 @@ banned_words = get_banned_words()
 
 class Player(Client):
     def __init__(self, ws: WebSocketServerProtocol, game: Game, name: str) -> None:
-        super().__init__(ws)
+        super().__init__(ws, game)
+        self.id = uuid4()
         self.name = name
-        self.game = game
         self.score = 0
 
     async def handle_incoming_message(self, message: Message) -> None:
         print(f"player '{self.name}' handling message: '{message}'")
+        match message.type:
+            case 'answer_question':
+                await self.handle_answer_question(message)
+            case _:
+                self.send_error('invalid_message')
+
+    @require_game_status(GameStatus.collect_answers)
+    async def handle_answer_question(self, message: Message) -> None:
+        try:
+            answer_id = UUID(message['answer_id'])
+        except (KeyError, ValueError):
+            return self.send_error('invalid_answer_id')
+
+        await self.game.on_question_answered(self.id, answer_id)
+
+

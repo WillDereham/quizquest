@@ -1,6 +1,14 @@
 from __future__ import annotations
 import json
-from json import JSONDecodeError
+from json import JSONDecodeError, JSONEncoder
+from typing import Any
+from uuid import UUID
+
+
+def default(o: Any) -> Any:
+    if isinstance(o, UUID):
+        return str(o)
+    raise TypeError()
 
 
 class Message(dict):
@@ -20,4 +28,4 @@ class Message(dict):
         return self['type']
 
     def __str__(self):
-        return json.dumps(self)
+        return json.dumps(self, default=default)

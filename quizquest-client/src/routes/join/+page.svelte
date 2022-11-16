@@ -6,7 +6,7 @@
   import { faArrowLeft } from '@fortawesome/free-solid-svg-icons'
   import { page } from '$app/stores'
 
-  let code = ''
+  let code = $page.url.searchParams.get('code') || ''
   $: code = code.replaceAll(/\D+/g, '').substring(0, 6)
   let name = ''
   $: name = name.substring(0, 16)
@@ -30,8 +30,6 @@
     if ($player !== null) {
       goto('/play')
     }
-
-    code = $page.url.searchParams.get('code') || ''
   })
 </script>
 
@@ -77,7 +75,9 @@
           >
             Join
           </button>
-          {#if error && !['game_not_found', 'name_taken', 'invalid_name'].includes(error)}
+          {#if error === 'game_already_started'}
+            <div class="text-red-500 text-sm">Game already started</div>
+          {:else if error && !['game_not_found', 'name_taken', 'invalid_name', 'game_already_started'].includes(error)}
             <div class="text-red-500 text-sm">An error occurred: {error}</div>
           {/if}
         </form>

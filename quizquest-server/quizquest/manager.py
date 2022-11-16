@@ -1,31 +1,40 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from uuid import UUID
 
 from websockets.legacy.server import WebSocketServerProtocol
 
-from quizquest.client import Client
+from quizquest.client import Client, require_game_status
 from quizquest.message import Message
 
-if TYPE_CHECKING:
-    from quizquest.game import Game
+from quizquest.game import Game, GameStatus
 
 
 class Manager(Client):
     def __init__(self, ws: WebSocketServerProtocol, game: Game) -> None:
-        super().__init__(ws)
-        self.game = game
+        super().__init__(ws, game)
 
     async def handle_incoming_message(self, message: Message) -> None:
         print(f"manager handling message: '{message}'")
         match message.type:
             case 'kick_player':
-                try:
-                    name: str = message['name']
-                except KeyError:
-                    self.send_error('invalid_name')
-                    return
-                await self.handle_kick_player(name)
+                await self.handle_kick_player(message)
+            case 'start_game':
+                await self.handle_start_game()
+            case _:
+                self.send_error('invalid_message')
 
-    async def handle_kick_player(self, name: str) -> None:
-        await self.game.kick_player(name)
+    @require_game_status(GameStatus.waiting_for_start)
+    async def handle_kick_player(self, message: Message) -> None:
+        try:
+            player_id = UUID(message['player_id'])
+        except (KeyError, ValueError):
+            return self.send_error('invalid_player_id')
+        await self.game.kick_player(player_id)
+
+    @require_game_status(GameStatus.waiting_for_start)
+    async def handle_start_game(self) -> None:
+        if len(self.game.players) == 0:
+            return self.send_error('no_players')
+
+        await self.game.start_question()

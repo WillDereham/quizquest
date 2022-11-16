@@ -13,8 +13,8 @@ port = 8080
 
 async def main() -> None:
     logging.basicConfig(
-        format="%(asctime)s %(message)s",
-        level=logging.DEBUG,
+        format="%(message)s",
+        level=logging.INFO,
     )
     loop = asyncio.get_running_loop()
     stop = loop.create_future()

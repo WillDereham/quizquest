@@ -4,7 +4,7 @@ from urllib.parse import urlparse, parse_qsl
 from websockets.server import WebSocketServerProtocol
 
 from quizquest.client import send_error
-from quizquest.game import games, Game
+from quizquest.game import games, Game, GameStatus
 from quizquest.manager import Manager
 from quizquest.message import Message
 from quizquest.player import Player, validate_name
@@ -21,13 +21,11 @@ async def handle_connection(ws: WebSocketServerProtocol) -> None:
                 code = int(query['code'])
             except (KeyError, ValueError):
                 print(f'invalid code: {query}')
-                await send_error(ws, 'invalid_code')
-                return
+                return await send_error(ws, 'invalid_code')
             try:
                 name = query['name']
             except KeyError:
-                await send_error(ws, 'invalid_name')
-                return
+                return await send_error(ws, 'invalid_name')
             await handle_player_connection(ws, code, name)
         case '/start':
             await handle_manager_connection(ws)
@@ -38,18 +36,18 @@ async def handle_connection(ws: WebSocketServerProtocol) -> None:
 async def handle_player_connection(ws: WebSocketServerProtocol, code: int, name: str) -> None:
     name = name.strip()
     if not validate_name(name):
-        await send_error(ws, 'invalid_name')
-        return
+        return await send_error(ws, 'invalid_name')
 
     try:
         game = games[code]
     except KeyError:
-        await send_error(ws, 'game_not_found')
-        return
+        return await send_error(ws, 'game_not_found')
 
-    if game.players.get(name) is not None:
-        await send_error(ws, 'name_taken')
-        return
+    if game.status != GameStatus.waiting_for_start:
+        return await send_error(ws, 'game_already_started')
+
+    if len({player for player in game.players.values() if player.name == name}):
+        return await send_error(ws, 'name_taken')
 
     player = Player(ws, game, name)
     game.on_player_join(player)
@@ -59,7 +57,7 @@ async def handle_player_connection(ws: WebSocketServerProtocol, code: int, name:
         await player.process_messages()
     finally:
         print(f"{code}: Player '{name}' disconnected")
-        game.on_player_leave(name)
+        game.on_player_leave(player.id)
 
 
 async def handle_manager_connection(ws: WebSocketServerProtocol) -> None:

@@ -2,11 +2,13 @@ import { goto } from '$app/navigation'
 import { PUBLIC_GAME_URL } from '$env/static/public'
 import { get, writable } from 'svelte/store'
 
+type GameStatus = 'waiting_for_start' | 'show_question' | 'collect_answers' | 'question_results'
+
 interface Player {
   ws: WebSocket
   code: string
   name: string
-  status: 'waiting_for_start'
+  status: GameStatus
 }
 
 export const player = writable<Player | null>(null)
@@ -18,7 +20,7 @@ function onMessage(event: MessageEvent) {
 
 export function joinGame(code: string, name: string) {
   return new Promise((resolve, reject) => {
-    console.log({ player: get(player) })
+    console.log('joining game', { player: get(player) })
     if (get(player) !== null) {
       return resolve(null)
     }
@@ -34,7 +36,7 @@ export function joinGame(code: string, name: string) {
       ws.removeEventListener('message', onInitialMessage)
       ws.removeEventListener('error', onConnectionError)
       const data = JSON.parse(event.data)
-      console.log(data)
+      console.log('received initial message', data)
       if (data.type === 'connected') {
         ws.addEventListener('message', onMessage)
         return resolve(null)

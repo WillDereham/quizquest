@@ -2,14 +2,35 @@ import { goto } from '$app/navigation'
 import { PUBLIC_GAME_URL } from '$env/static/public'
 import { get, writable } from 'svelte/store'
 
+interface Question {
+  id: string
+  number: number
+  text: string
+  answers: { id: string; text: string; correct: boolean }[]
+  time_limit: number
+}
+
+type GameStatus = 'waiting_for_start' | 'show_question' | 'collect_answers' | 'question_results'
+type ShowQuestionStatusUpdate = {
+  status: 'show_question'
+  question: Question
+}
+type GameStatusUpdate =
+  | { status: 'waiting_for_start' }
+  | ShowQuestionStatusUpdate
+  | { status: 'collect_answers' }
+  | { status: 'question_results' }
+
 export interface Manager {
   ws: WebSocket
   code: string
   players: Map<string, ManagerPlayer>
-  status: 'waiting_for_start'
+  status: GameStatus
+  current_question: Question | null
 }
 
 export interface ManagerPlayer {
+  id: string
   name: string
 }
 
@@ -25,23 +46,57 @@ function onMessage(event: MessageEvent) {
     case 'player_left':
       onPlayerLeave(message)
       break
+    case 'change_status':
+      onChangeStatus(message)
+      break
     default:
       console.warn('Received unknown message:', message)
   }
 }
 
-function onPlayerJoin(message: { player: { name: string } }) {
+function onPlayerJoin(message: { player: { id: string; name: string } }) {
   const players = get(manager)?.players
   if (!players) return
-  players.set(message.player.name, message.player)
+  players.set(message.player.id, message.player)
   manager.update((manager) => manager)
 }
 
-function onPlayerLeave(message: { name: string }) {
+function onPlayerLeave(message: { player_id: string }) {
   const players = get(manager)?.players
   if (!players) return
-  players.delete(message.name)
+  players.delete(message.player_id)
   manager.update((manager) => manager)
+}
+
+function onChangeStatus(message: GameStatusUpdate) {
+  manager.update((manager) => manager && { ...manager, status: message.status })
+  console.log('status changed to', message.status)
+  switch (message.status) {
+    case 'show_question':
+      onShowQuestion(message)
+      break
+    case 'collect_answers':
+      onCollectAnswers(message)
+      break
+    case 'question_results':
+      onQuestionResults(message)
+      break
+    default:
+      console.warn('Unknown game status:', message.status, message)
+  }
+}
+
+function onShowQuestion(message: ShowQuestionStatusUpdate) {
+  manager.update((manager) => manager && { ...manager, current_question: message.question })
+  console.log('Show question', message.question)
+}
+
+function onCollectAnswers(message: { status: 'collect_answers' }) {
+  console.log('Collect answers', message)
+}
+
+function onQuestionResults(message: { status: 'question_results' }) {
+  console.log('Question results', message)
 }
 
 export function startGame() {
@@ -64,6 +119,7 @@ export function startGame() {
           code: data.code,
           players: new Map<string, ManagerPlayer>(),
           status: 'waiting_for_start',
+          current_question: null,
         })
         return resolve(null)
       } else if (data.type === 'error') {
@@ -79,10 +135,16 @@ export function startGame() {
   })
 }
 
-export function kickPlayer(name: string) {
+export function kickPlayer(player_id: string) {
   const ws = get(manager)?.ws
   if (!ws) return
-  ws.send(JSON.stringify({ type: 'kick_player', name }))
+  ws.send(JSON.stringify({ type: 'kick_player', player_id }))
+}
+
+export function beginGame() {
+  const ws = get(manager)?.ws
+  if (!ws) return
+  ws.send(JSON.stringify({ type: 'start_game' }))
 }
 
 export function endGame() {

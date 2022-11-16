@@ -1,15 +1,19 @@
-from asyncio import Queue, wait, create_task, FIRST_COMPLETED, TaskGroup, Task
+from asyncio import Queue, TaskGroup, Task
+from functools import wraps
+from typing import Callable
 
-from websockets.exceptions import ConnectionClosedError, ConnectionClosed
+from websockets.exceptions import ConnectionClosed
 from websockets.legacy.server import WebSocketServerProtocol
 
+from quizquest.game import GameStatus, Game
 from quizquest.message import Message
 
 
 class Client:
-    def __init__(self, ws: WebSocketServerProtocol) -> None:
+    def __init__(self, ws: WebSocketServerProtocol, game: Game) -> None:
         self._ws = ws
         self._outgoing_messages: Queue[Message] = Queue()
+        self.game = game
 
     async def process_messages(self) -> None:
         try:
@@ -27,13 +31,14 @@ class Client:
 
     async def _process_incoming_messages(self, outgoing_task: Task) -> None:
         try:
-            async for message in self._ws:
-                try:
-                    message = Message.from_json(message)
-                except ValueError:
-                    self.send_error('invalid_syntax')
-                    continue
-                await self.handle_incoming_message(message)
+            async with TaskGroup() as tg:
+                async for message in self._ws:
+                    try:
+                        message = Message.from_json(message)
+                    except ValueError:
+                        self.send_error('invalid_syntax')
+                        continue
+                    tg.create_task(self.handle_incoming_message(message))
         finally:
             outgoing_task.cancel()
 
@@ -60,3 +65,14 @@ async def _send_message(ws: WebSocketServerProtocol, message: Message) -> None:
 async def send_error(ws: WebSocketServerProtocol, code: str, **kwargs) -> None:
     print(f'Sending error: {code}')
     await _send_message(ws, Message({'type': 'error', 'code': code} | kwargs))
+
+
+def require_game_status(state: GameStatus):
+    def decorator(func: Callable):
+        @wraps(func)
+        async def wrapper(self: Client, *args, **kwargs):
+            if self.game.status != state:
+                return self.send_error('invalid_game_status')
+            return await func(self, *args, **kwargs)
+        return wrapper
+    return decorator
