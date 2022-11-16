@@ -52,6 +52,7 @@ class Game:
                 QuestionAnswer(uuid4(), '4', correct=True),
                 QuestionAnswer(uuid4(), '-1', correct=False),
                 QuestionAnswer(uuid4(), '5', correct=False),
+                QuestionAnswer(uuid4(), '5', correct=False),
             ], time_limit=10),
             Question(uuid4(), 'What is the derivative of ln x?', [
                 QuestionAnswer(uuid4(), 'ln(ln(x)', correct=False),

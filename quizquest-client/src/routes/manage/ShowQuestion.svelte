@@ -7,10 +7,9 @@
 
   let timerStarted = false
   onMount(() => {
-    console.log({ duration })
     setTimeout(() => {
       timerStarted = true
-    }, 0)
+    }, 10)
   })
 
   export let duration: number | null
@@ -28,10 +27,10 @@
 </script>
 
 {#if question}
-  <div class="w-full h-6 bg-white relative overflow-hidden bg-opacity-10">
+  <div class="w-full h-6  relative overflow-hidden {duration ? 'bg-white bg-opacity-10' : ''}">
     {#if duration}
       <div
-        class="absolute top-0 left-0 w-full -translate-x-full bg-pink-500 bottom-0 transition-transform ease-linear"
+        class="absolute top-0 left-0 w-full -translate-x-full bg-pink-500 bottom-0 transition-transform ease-linear rounded-r-full"
         style:transform="translate({timerStarted ? 0 : '-100%'})"
         style:transition-duration="{duration * 1000}ms"
       />
@@ -65,7 +64,7 @@
               : colourClasses[index % colourClasses.length]}
               {question.answers.length % 2 == 1 ? 'last:col-span-2' : ''}"
           >
-            <div class="break-words max-w-full">
+            <div class="break-words max-w-full text-2xl">
               {answer.text}
             </div>
           </div>
