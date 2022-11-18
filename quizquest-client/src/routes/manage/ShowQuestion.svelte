@@ -30,7 +30,7 @@
   <div class="w-full h-6  relative overflow-hidden {duration ? 'bg-white bg-opacity-10' : ''}">
     {#if duration}
       <div
-        class="absolute top-0 left-0 w-full -translate-x-full bg-pink-500 bottom-0 transition-transform ease-linear rounded-r-full"
+        class="absolute top-0 left-0 w-[calc(100%+.75rem)] -translate-x-full bg-pink-500 bottom-0 transition-transform ease-linear rounded-r-full"
         style:transform="translate({timerStarted ? 0 : '-100%'})"
         style:transition-duration="{duration * 1000}ms"
       />
