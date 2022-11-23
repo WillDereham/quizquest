@@ -1,5 +1,5 @@
 from asyncio import TaskGroup
-from typing import NoReturn, Coroutine, Awaitable
+from typing import NoReturn, Awaitable
 
 
 class TaskEnded(Exception):

@@ -4,7 +4,7 @@ import secrets
 from asyncio import sleep, get_running_loop, Future, timeout
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
 from quizquest.message import Message
@@ -21,6 +21,7 @@ class QuestionAnswer:
     id: UUID
     text: str
     correct: bool
+    players_answered: set[UUID] = field(default_factory=set)
 
 
 @dataclass
@@ -29,7 +30,7 @@ class Question:
     text: str
     answers: list[QuestionAnswer]
     time_limit: int
-    received_answers: dict[UUID, UUID] = field(default_factory=dict)  # player_id: answer_id
+    player_answers: dict[UUID, QuestionAnswer] = field(default_factory=dict)  # player: answer
 
 
 class GameStatus(StrEnum):
@@ -62,7 +63,7 @@ class Game:
             ], time_limit=20),
         ]
         self._current_question_id = 0
-        self.all_players_answered: Future | None = None
+        self._all_players_answered: Future | None = None
 
     @property
     def current_question(self) -> Question:
@@ -87,31 +88,17 @@ class Game:
         player.send_message(Message({'type': 'player_kicked'}))
         await player.disconnect()
 
-    def _change_status(
-            self,
-            status: GameStatus,
-            manager_data: dict,
-            player_data: Callable[[Player], dict],
-    ):
-        self.status = status
-        self.manager.send_message(Message({
-            'type': 'change_status',
-            'status': status,
-            **manager_data,
-
-        }))
-        for player in self.players.values():
-            player.send_message(Message({
-                'type': 'change_status',
-                'status': status,
-                **player_data(player),
-            }))
+    async def start_game(self) -> None:
+        await self.start_question()
 
     async def start_question(self) -> None:
         question = self.current_question
-        self._change_status(
-            GameStatus.show_question,
-            manager_data={'question': {
+
+        # Show Question
+        self.status = GameStatus.show_question
+        self.manager.send_message(Message({
+            'type': 'show_question',
+            'question': {
                 'id': question.id,
                 'number': self._current_question_id + 1,
                 'text': question.text,
@@ -121,37 +108,75 @@ class Game:
                     } for answer in question.answers
                 ],
                 'time_limit': question.time_limit,
-            }},
-            player_data=lambda p: {},
-        )
-        await sleep(5)
-        self._change_status(
-            GameStatus.collect_answers,
-            manager_data={},
-            player_data=lambda p: {'number_of_answers': len(question.answers)},
-        )
-        loop = get_running_loop()
-        self.all_players_answered = loop.create_future()
+            }
+        }))
+
+        show_question_message = Message({
+            'type': 'show_question',
+            'question': {
+                'id': question.id,
+                'number': self._current_question_id + 1,
+                'answers': [{'id': answer.id} for answer in question.answers]
+            },
+        })
+        for player in self.players.values():
+            player.send_message(show_question_message)
+
+        await sleep(5.0)
+
+        # Collect answers
+        self.status = GameStatus.collect_answers
+        self.manager.send_message(Message({'type': 'collect_answers'}))
+        for player in self.players.values():
+            player.send_message(Message({'type': 'collect_answers'}))
+
+        self._all_players_answered = get_running_loop().create_future()
         try:
             async with timeout(question.time_limit):
-                await self.all_players_answered
+                await self._all_players_answered
         except TimeoutError:
             pass
 
-        # Collect answers
-        self._change_status(GameStatus.question_results, manager_data={
-            # Score details
-        }, player_data=lambda p: {})
+        # Question Results
+        self.status = GameStatus.question_results
 
-    async def on_question_answered(self, player_id: UUID, answer_id: UUID):
+        last_question = self._current_question_id + 1 == len(self.questions)
+        self.manager.send_message(Message({
+            'type': 'question_results',
+            'answers': [
+                {'id': answer.id, 'players_answered': list(answer.players_answered)}
+                for answer in question.answers
+            ],
+            'last_question': last_question,
+        }))
+        for player in self.players.values():
+            chosen_answer = question.player_answers.get(player.id, False)
+            correct = chosen_answer and chosen_answer.correct
+            player.send_message(Message({
+                'type': 'question_results',
+                'correct': correct,
+                'score': 100 if correct else 0,
+                'last_question': last_question,
+            }))
+
+    async def next_question(self):
+        if self._current_question_id + 1 >= len(self.questions):
+            return self.manager.send_error('game_ended')
+        self._current_question_id += 1
+        await self.start_question()
+
+    async def on_question_answered(self, player: Player, answer: QuestionAnswer):
         question = self.current_question
-        question.received_answers[player_id] = answer_id
+
+        question.player_answers[player.id] = answer
+        answer.players_answered.add(player.id)
 
         # If all players have answered the question
         # Checks if is a superset, because a user could leave before the question is over
-        if set(question.received_answers.keys()) >= set(self.players.keys()):
-            self.all_players_answered.set_result(None)
+        if set(question.player_answers.keys()) >= set(self.players.keys()):
+            self._all_players_answered.set_result(None)
 
-        self.manager.send_message(Message({
-            'type': 'question_answered', 'player_id': player_id, 'answer_id': answer_id
-        }))
+        player.send_message(Message({'type': 'question_answered'}))
+        # self.manager.send_message(Message({
+        #     'type': 'question_answered', 'player_id': player.id, 'answer_id': answer.id
+        # }))

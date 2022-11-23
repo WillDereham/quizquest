@@ -8,7 +8,6 @@
 
   let qrCodeURL: string | null = null
 
-  let players: ManagerPlayer[]
   $: players = [...$manager!.players.values()].reverse()
 
   onMount(async () => {

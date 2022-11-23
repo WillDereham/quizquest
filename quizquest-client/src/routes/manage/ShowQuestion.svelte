@@ -1,9 +1,11 @@
 <script lang="ts">
-  import { manager } from '$lib/manager'
+  import { manager, nextQuestion } from '$lib/manager'
   import { fly } from 'svelte/transition'
   import { onMount } from 'svelte'
+  import { answerColourClasses } from '$lib/answerColours'
 
   $: question = $manager?.current_question
+  $: last_question = $manager?.question_results?.last_question ?? null
 
   let timerStarted = false
   onMount(() => {
@@ -14,16 +16,7 @@
 
   export let duration: number | null
   export let showAnswers: boolean = false
-  export let showCorrect: boolean = false
-
-  const colourClasses = [
-    'bg-fuchsia-500',
-    'bg-yellow-500',
-    'bg-cyan-500',
-    'bg-emerald-500',
-    'bg-orange-500',
-    'bg-violet-500',
-  ]
+  export let questionResults: boolean = false
 </script>
 
 {#if question}
@@ -41,30 +34,36 @@
     class="accent-pink-500 [&::-moz-progress-bar]:bg-pink-500 [&::-webkit-progress-value]:bg-pink-500 bg-transparent"
   /> -->
   <div class="grid grid-cols-1 h-full {showAnswers ? 'grid-rows-[auto,1fr]' : 'grid-rows-1'}">
-    <div class="flex flex-col items-center justify-center">
-      <div class="flex flex-col items-center gap-6 p-4">
+    <div class="flex {showAnswers ? 'items-start' : 'items-center'} justify-center p-4 relative">
+      <div class="flex flex-col items-center gap-6 p-4 grow">
         <h2 class="text-2xl">Question #{question.number}</h2>
         <h1 class="text-7xl font-medium break-words max-w-[100vw] text-center leading-relaxed">
           {question.text}
         </h1>
       </div>
+      {#if questionResults && !last_question}
+        <button class="bg-pink-500 rounded-md py-2 px-4 absolute right-10" on:click={nextQuestion}>
+          Next
+        </button>
+      {/if}
     </div>
     {#if showAnswers}
       <div
         class="grid grid-cols-2 auto-rows-fr gap-2 p-2"
-        in:fly={{ y: 200, duration: showCorrect ? 0 : 1000, opacity: 100 }}
+        in:fly={{ y: 200, duration: questionResults ? 0 : 1000, opacity: 100 }}
       >
         {#each question.answers as answer, index (answer.id)}
           <div
-            class="flex items-center justify-center rounded-md shadow-xl p-4
-              {showCorrect
+            class="flex flex-col items-center rounded-md shadow-xl p-4
+              {questionResults
               ? answer.correct
                 ? 'bg-green-500'
                 : 'bg-red-500'
-              : colourClasses[index % colourClasses.length]}
+              : answerColourClasses[index % answerColourClasses.length]}
               {question.answers.length % 2 == 1 ? 'last:col-span-2' : ''}"
           >
-            <div class="break-words max-w-full text-2xl">
+            <div class="text-xl">{'ABCDEF'[index]}</div>
+            <div class="break-words max-w-full text-2xl flex items-center justify-center grow">
               {answer.text}
             </div>
           </div>

@@ -21,6 +21,8 @@ class Manager(Client):
                 await self.handle_kick_player(message)
             case 'start_game':
                 await self.handle_start_game()
+            case 'next_question':
+                await self.handle_next_question()
             case _:
                 self.send_error('invalid_message')
 
@@ -37,4 +39,8 @@ class Manager(Client):
         if len(self.game.players) == 0:
             return self.send_error('no_players')
 
-        await self.game.start_question()
+        await self.game.start_game()
+
+    @require_game_status(GameStatus.question_results)
+    async def handle_next_question(self) -> None:
+        await self.game.next_question()

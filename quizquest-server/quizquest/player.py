@@ -52,6 +52,14 @@ class Player(Client):
         except (KeyError, ValueError):
             return self.send_error('invalid_answer_id')
 
-        await self.game.on_question_answered(self.id, answer_id)
+        question = self.game.current_question
+        if self.id in question.player_answers:
+            return self.send_error('already_answered')
+        answer = next(
+            (answer for answer in question.answers if answer.id == answer_id),
+            None
+        )
+        if answer is None:
+            return self.send_error('invalid_answer_id')
 
-
+        await self.game.on_question_answered(self, answer)

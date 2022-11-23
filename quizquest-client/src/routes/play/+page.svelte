@@ -6,6 +6,10 @@
   import { goto } from '$app/navigation'
   import WaitingForStart from './WaitingForStart.svelte'
   import GameCodeLink from '$lib/GameCodeLink.svelte'
+  import ShowQuestion from './ShowQuestion.svelte'
+  import CollectAnswer from './CollectAnswer.svelte'
+  import QuestionAnswered from './QuestionAnswered.svelte'
+  import QuestionResults from './QuestionResults.svelte'
 
   onMount(async () => {
     if ($player === null) {
@@ -27,6 +31,16 @@
     </div>
     {#if $player.status === 'waiting_for_start'}
       <WaitingForStart />
+    {:else if $player.status === 'show_question'}
+      <ShowQuestion />
+    {:else if $player.status === 'collect_answers'}
+      <CollectAnswer />
+    {:else if $player.status === 'question_answered'}
+      <QuestionAnswered />
+    {:else if $player.status === 'question_results'}
+      <QuestionResults />
+    {:else}
+      Unknown game status
     {/if}
   </div>
 {/if}

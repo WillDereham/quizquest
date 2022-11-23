@@ -31,7 +31,7 @@
     {:else if $manager.status === 'collect_answers'}
       <ShowQuestion showAnswers={true} duration={$manager.current_question?.time_limit || null} />
     {:else if $manager.status === 'question_results'}
-      <ShowQuestion showAnswers={true} showCorrect={true} duration={null} />
+      <ShowQuestion showAnswers={true} questionResults={true} duration={null} />
     {:else}
       Unknown game status
     {/if}
