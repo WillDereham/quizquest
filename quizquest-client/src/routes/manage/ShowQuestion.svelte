@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { manager, nextQuestion } from '$lib/manager'
+  import { manager, nextQuestion, skipQuestion } from '$lib/manager'
   import { fly } from 'svelte/transition'
   import { onMount } from 'svelte'
   import { answerColourClasses } from '$lib/answerColours'
@@ -41,7 +41,11 @@
           {question.text}
         </h1>
       </div>
-      {#if questionResults && !last_question}
+      {#if showAnswers && !questionResults}
+        <button class="bg-pink-500 rounded-md py-2 px-4 absolute right-10" on:click={skipQuestion}>
+          Skip
+        </button>
+      {:else if questionResults && !last_question}
         <button class="bg-pink-500 rounded-md py-2 px-4 absolute right-10" on:click={nextQuestion}>
           Next
         </button>

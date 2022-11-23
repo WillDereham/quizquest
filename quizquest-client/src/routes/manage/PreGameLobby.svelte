@@ -17,7 +17,7 @@
 
 {#if $manager !== null}
   <div
-    class="grid grid-cols-1 md:grid-cols-[1fr,auto] grid-rows-[auto,1fr] max-h-[calc(100vh-5rem)]"
+    class="grid grid-cols-1 md:grid-cols-[1fr,auto] grid-rows-[auto,1fr] max-h-[calc(100vh-5rem)] h-full"
   >
     <div class="row-start-1 col-start-1 p-8 gap-2 flex flex-col">
       <div class="text-xl">

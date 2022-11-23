@@ -19,12 +19,11 @@
 </script>
 
 {#if $player !== null}
-  <div class="h-full flex flex-col">
-    <div class="flex bg-violet-800 h-20">
+  <div class="flex flex-col h-screen max-h-full">
+    <div class="flex bg-violet-800 h-20 shrink-0">
       <div class="p-6 font-medium text-lg">QuizQuest</div>
       <GameCodeLink code={$player.code} />
       <div class="flex items-center gap-3 p-6"><Fa icon={faUser} />{$player.name}</div>
-
       <button on:click={leaveGame} class="p-6 hover:bg-violet-900 ml-auto">
         <Fa icon={faDoorOpen} />
       </button>

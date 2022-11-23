@@ -153,6 +153,10 @@ export function nextQuestion() {
   sendMessage({ type: 'next_question' })
 }
 
+export function skipQuestion() {
+  sendMessage({ type: 'skip_question' })
+}
+
 export function endGame() {
   get(manager)?.ws.close()
   manager.set(null)

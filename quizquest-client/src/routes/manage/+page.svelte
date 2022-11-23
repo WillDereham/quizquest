@@ -17,7 +17,7 @@
 
 {#if $manager !== null}
   <div class="flex flex-col h-screen max-h-full ">
-    <div class="flex bg-violet-800 gap-6 h-20">
+    <div class="flex bg-violet-800 h-20">
       <div class="p-6 font-medium text-lg">QuizQuest</div>
       <GameCodeLink code={$manager.code} />
       <button on:click={endGame} class="p-6 hover:bg-violet-900 ml-auto">

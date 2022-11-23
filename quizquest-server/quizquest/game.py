@@ -165,6 +165,9 @@ class Game:
         self._current_question_id += 1
         await self.start_question()
 
+    async def skip_question(self):
+        self._all_players_answered.set_result(None)
+
     async def on_question_answered(self, player: Player, answer: QuestionAnswer):
         question = self.current_question
 
