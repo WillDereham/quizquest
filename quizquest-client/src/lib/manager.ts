@@ -10,7 +10,12 @@ interface Question {
   time_limit: number
 }
 
-type GameStatus = 'waiting_for_start' | 'show_question' | 'collect_answers' | 'question_results'
+type GameStatus =
+  | 'waiting_for_start'
+  | 'show_question'
+  | 'collect_answers'
+  | 'question_results'
+  | 'game_results'
 type ShowQuestionMessage = {
   type: 'show_question'
   question: Question
@@ -22,7 +27,13 @@ export interface Manager {
   players: Map<string, ManagerPlayer>
   status: GameStatus
   current_question: Question | null
-  question_results: { last_question: boolean } | null
+  question_results: {
+    last_question: boolean
+    leaderboard: { id: string; name: string; score: number }[]
+  } | null
+  game_results: {
+    leaderboard: { id: string; name: string; score: number }[]
+  } | null
 }
 
 export interface ManagerPlayer {
@@ -51,6 +62,9 @@ function onMessage(event: MessageEvent) {
       break
     case 'question_results':
       onQuestionResults(message)
+      break
+    case 'game_results':
+      onGameResults(message)
       break
 
     default:
@@ -88,14 +102,40 @@ function onCollectAnswers(message: { type: 'collect_answers' }) {
   console.log('Collect answers', message)
 }
 
-function onQuestionResults(message: { type: 'question_results'; last_question: boolean }) {
+function onQuestionResults(message: {
+  type: 'question_results'
+  last_question: boolean
+  leaderboard: { id: string; name: string; score: number }[]
+}) {
   changeStatus('question_results')
   manager.update(
     (manager) =>
-      manager && { ...manager, question_results: { last_question: message.last_question } },
+      manager && {
+        ...manager,
+        question_results: {
+          last_question: message.last_question,
+          leaderboard: message.leaderboard,
+        },
+      },
   )
 
   console.log('Question results', message)
+}
+
+function onGameResults(message: {
+  type: 'game_results'
+  leaderboard: { id: string; name: string; score: number }[]
+}) {
+  changeStatus('game_results')
+  manager.update(
+    (manager) =>
+      manager && {
+        ...manager,
+        game_results: {
+          leaderboard: message.leaderboard,
+        },
+      },
+  )
 }
 
 export function startGame() {
@@ -120,6 +160,7 @@ export function startGame() {
           status: 'waiting_for_start',
           current_question: null,
           question_results: null,
+          game_results: null,
         })
         return resolve(null)
       } else if (data.type === 'error') {
@@ -151,6 +192,10 @@ export function beginGame() {
 
 export function nextQuestion() {
   sendMessage({ type: 'next_question' })
+}
+
+export function gameResults() {
+  sendMessage({ type: 'game_results' })
 }
 
 export function skipQuestion() {

@@ -23,9 +23,10 @@ interface Player {
   current_question: Question | null
   question_results: {
     correct: boolean
-    score: number
+    score_gained: number
     last_question: boolean
   } | null
+  score: number
 }
 
 export const player = writable<Player | null>(null)
@@ -76,7 +77,8 @@ function onQuestionAnswered(message: { type: 'question_answered' }) {
 function onQuestionResults(message: {
   type: 'question_results'
   correct: boolean
-  score: number
+  score_gained: number
+  new_score: number
   last_question: boolean
 }) {
   changeStatus('question_results')
@@ -86,9 +88,10 @@ function onQuestionResults(message: {
         ...player,
         question_results: {
           correct: message.correct,
-          score: message.score,
+          score_gained: message.score_gained,
           last_question: message.last_question,
         },
+        score: message.new_score,
       },
   )
   console.log('Question results', message)
@@ -117,6 +120,7 @@ export function joinGame(code: string, name: string) {
       status: 'waiting_for_start',
       current_question: null,
       question_results: null,
+      score: 0,
     })
 
     const onConnectionError = () => {

@@ -3,7 +3,9 @@ from __future__ import annotations
 import secrets
 from asyncio import sleep, get_running_loop, Future, timeout
 from dataclasses import dataclass, field
+from datetime import datetime, timezone, timedelta
 from enum import StrEnum
+from math import floor
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
@@ -30,7 +32,7 @@ class Question:
     text: str
     answers: list[QuestionAnswer]
     time_limit: int
-    player_answers: dict[UUID, QuestionAnswer] = field(default_factory=dict)  # player: answer
+    player_answers: dict[UUID, tuple[QuestionAnswer, datetime]] = field(default_factory=dict)  # player: answer
 
 
 class GameStatus(StrEnum):
@@ -38,6 +40,11 @@ class GameStatus(StrEnum):
     show_question = 'show_question'
     collect_answers = 'collect_answers'
     question_results = 'question_results'
+    game_results = 'game_results'
+
+
+def _calculate_score(elapsed_time: timedelta, time_limit: timedelta):
+    return min(1100 - floor(600 * elapsed_time / time_limit), 1000)
 
 
 class Game:
@@ -60,6 +67,12 @@ class Game:
                 QuestionAnswer(uuid4(), 'x^2', correct=False),
                 QuestionAnswer(uuid4(), 'x^x', correct=False),
                 QuestionAnswer(uuid4(), '1/x', correct=True),
+            ], time_limit=20),
+            Question(uuid4(), 'What is the derivative of x^2?', [
+                QuestionAnswer(uuid4(), 'ln(x)', correct=False),
+                QuestionAnswer(uuid4(), '2x^2', correct=False),
+                QuestionAnswer(uuid4(), '2x', correct=True),
+                QuestionAnswer(uuid4(), 'x^3/3', correct=False),
             ], time_limit=20),
         ]
         self._current_question_id = 0
@@ -130,6 +143,7 @@ class Game:
         for player in self.players.values():
             player.send_message(Message({'type': 'collect_answers'}))
 
+        start_time = datetime.now(timezone.utc)
         self._all_players_answered = get_running_loop().create_future()
         try:
             async with timeout(question.time_limit):
@@ -141,23 +155,44 @@ class Game:
         self.status = GameStatus.question_results
 
         last_question = self._current_question_id + 1 == len(self.questions)
-        self.manager.send_message(Message({
-            'type': 'question_results',
-            'answers': [
-                {'id': answer.id, 'players_answered': list(answer.players_answered)}
-                for answer in question.answers
-            ],
-            'last_question': last_question,
-        }))
+
         for player in self.players.values():
-            chosen_answer = question.player_answers.get(player.id, False)
-            correct = chosen_answer and chosen_answer.correct
+            try:
+                (chosen_answer, time_answered) = question.player_answers[player.id]
+            except KeyError:
+                correct = False
+                score_gained = 0
+            else:
+                correct = chosen_answer.correct
+                elapsed_time = time_answered - start_time
+                score_gained = _calculate_score(
+                    elapsed_time, timedelta(seconds=1) * question.time_limit
+                ) if correct else 0
+
+            new_score = player.score = player.score + score_gained
             player.send_message(Message({
                 'type': 'question_results',
                 'correct': correct,
-                'score': 100 if correct else 0,
+                'score_gained': score_gained,
+                'new_score': new_score,
                 'last_question': last_question,
             }))
+
+        self.manager.send_message(Message({
+            'type': 'question_results',
+            # 'answers': [
+            #     {'id': answer.id, 'players_answered': list(answer.players_answered)}
+            #     for answer in question.answers
+            # ],
+            'last_question': last_question,
+            'leaderboard': self._get_leaderboard(length=5),
+        }))
+
+    def _get_leaderboard(self, length: int):
+        return sorted([
+            {'id': user.id, 'name': user.name, 'score': user.score}
+            for user in self.players.values()
+        ], key=lambda u: u['score'], reverse=True)[:length]
 
     async def next_question(self):
         if self._current_question_id + 1 >= len(self.questions):
@@ -168,10 +203,25 @@ class Game:
     async def skip_question(self):
         self._all_players_answered.set_result(None)
 
+    async def game_results(self):
+        for index, player in enumerate(sorted(
+                self.players.values(), key=lambda p: p.score, reverse=True
+        )):
+            player.send_message(Message({
+                'type': 'game_results',
+                'rank': index + 1,
+                'score': player.score,
+            }))
+
+        self.manager.send_message(Message({
+            'type': 'game_results',
+            'leaderboard': self._get_leaderboard(length=3),
+        }))
+
     async def on_question_answered(self, player: Player, answer: QuestionAnswer):
         question = self.current_question
 
-        question.player_answers[player.id] = answer
+        question.player_answers[player.id] = (answer, datetime.now(timezone.utc))
         answer.players_answered.add(player.id)
 
         # If all players have answered the question

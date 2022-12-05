@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import Fa from 'svelte-fa'
-  import { faDoorOpen, faLink, faUser } from '@fortawesome/free-solid-svg-icons'
+  import { faDoorOpen, faLink, faStar, faUser } from '@fortawesome/free-solid-svg-icons'
   import { player, leaveGame } from '$lib/player'
   import { goto } from '$app/navigation'
   import WaitingForStart from './WaitingForStart.svelte'
@@ -24,7 +24,10 @@
       <div class="p-6 font-medium text-lg">QuizQuest</div>
       <GameCodeLink code={$player.code} />
       <div class="flex items-center gap-3 p-6"><Fa icon={faUser} />{$player.name}</div>
-      <button on:click={leaveGame} class="p-6 hover:bg-violet-900 ml-auto">
+      <div class="flex items-center gap-3 p-6 ml-auto">
+        <Fa icon={faStar} />{$player.score}
+      </div>
+      <button on:click={leaveGame} class="p-6 hover:bg-violet-900">
         <Fa icon={faDoorOpen} />
       </button>
     </div>

@@ -7,6 +7,7 @@
   import Fa from 'svelte-fa'
   import ShowQuestion from './ShowQuestion.svelte'
   import GameCodeLink from '$lib/GameCodeLink.svelte'
+  import GameResults from './GameResults.svelte'
 
   onMount(async () => {
     if ($manager === null) {
@@ -32,6 +33,8 @@
       <ShowQuestion showAnswers={true} duration={$manager.current_question?.time_limit || null} />
     {:else if $manager.status === 'question_results'}
       <ShowQuestion showAnswers={true} questionResults={true} duration={null} />
+    {:else if $manager.status === 'game_results'}
+      <GameResults />
     {:else}
       Unknown game status
     {/if}

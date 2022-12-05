@@ -16,7 +16,7 @@
       <Fa icon={results.correct ? faCheck : faXmark} class="text-8xl" />
     </div>
     <div class="text-6xl">{results.correct ? 'Correct' : 'Incorrect'}</div>
-    <div class="text-4xl">{results.correct ? '+' : ''}{results.score} points</div>
+    <div class="text-4xl">{results.correct ? '+' : ''}{results.score_gained} points</div>
   </div>
 {:else}
   Error: results not set

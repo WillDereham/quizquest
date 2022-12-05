@@ -25,6 +25,8 @@ class Manager(Client):
                 await self.handle_next_question()
             case 'skip_question':
                 await self.handle_skip_question()
+            case 'game_results':
+                await self.handle_game_results()
             case _:
                 self.send_error('invalid_message')
 
@@ -50,3 +52,7 @@ class Manager(Client):
     @require_game_status(GameStatus.collect_answers)
     async def handle_skip_question(self) -> None:
         await self.game.skip_question()
+
+    @require_game_status(GameStatus.question_results)
+    async def handle_game_results(self) -> None:
+        await self.game.game_results()
