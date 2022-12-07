@@ -1,7 +1,6 @@
 <script lang="ts">
   import { endGame, manager } from '$lib/manager'
-  import { faMedal } from '@fortawesome/free-solid-svg-icons'
-  import Fa from 'svelte-fa'
+  import ResultsMedal from '$lib/ResultsMedal.svelte'
 
   $: leaderboard = $manager?.game_results?.leaderboard
 </script>
@@ -20,13 +19,8 @@
           <div>{leaderboard[1].score} points</div>
         </div>
       {/if}
-      <div class="h-1/2 bg-pink-500 flex flex-col items-center gap-4 pt-6">
-        <div
-          class="h-32 aspect-square rounded-full shadow-2xl flex items-center justify-center bg-[#c0c0c0]"
-        >
-          <Fa icon={faMedal} class="text-5xl" />
-        </div>
-        <div class="text-2xl">2nd</div>
+      <div class="h-1/2 bg-pink-500 pt-6">
+        <ResultsMedal place={2} />
       </div>
     </div>
     <div class="grow flex flex-col justify-end">
@@ -38,13 +32,8 @@
           <div>{leaderboard[0].score} points</div>
         </div>
       {/if}
-      <div class="h-3/4 bg-pink-500 flex flex-col items-center gap-4 pt-6">
-        <div
-          class="h-32 aspect-square rounded-full shadow-2xl flex items-center justify-center bg-orange-400"
-        >
-          <Fa icon={faMedal} class="text-5xl" />
-        </div>
-        <div class="text-2xl">1st</div>
+      <div class="h-3/4 bg-pink-500 pt-6">
+        <ResultsMedal place={1} />
       </div>
     </div>
     <div class="grow flex flex-col justify-end">
@@ -56,13 +45,8 @@
           <div>{leaderboard[2].score} points</div>
         </div>
       {/if}
-      <div class="h-1/3 bg-pink-500 flex flex-col items-center gap-4 pt-6">
-        <div
-          class="h-32 aspect-square rounded-full shadow-2xl flex items-center justify-center bg-amber-700"
-        >
-          <Fa icon={faMedal} class="text-5xl" />
-        </div>
-        <div class="text-2xl">3rd</div>
+      <div class="h-1/3 bg-pink-500 pt-6">
+        <ResultsMedal place={3} />
       </div>
     </div>
   </div>

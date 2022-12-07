@@ -10,6 +10,7 @@
   import CollectAnswer from './CollectAnswer.svelte'
   import QuestionAnswered from './QuestionAnswered.svelte'
   import QuestionResults from './QuestionResults.svelte'
+  import GameResults from './GameResults.svelte'
 
   onMount(async () => {
     if ($player === null) {
@@ -41,6 +42,8 @@
       <QuestionAnswered />
     {:else if $player.status === 'question_results'}
       <QuestionResults />
+    {:else if $player.status === 'game_results'}
+      <GameResults />
     {:else}
       Unknown game status
     {/if}

@@ -8,6 +8,7 @@ type GameStatus =
   | 'collect_answers'
   | 'question_answered'
   | 'question_results'
+  | 'game_results'
 
 interface Question {
   id: string
@@ -26,6 +27,7 @@ interface Player {
     score_gained: number
     last_question: boolean
   } | null
+  rank: number | null
   score: number
 }
 
@@ -46,6 +48,9 @@ function onMessage(event: MessageEvent) {
       break
     case 'question_results':
       onQuestionResults(message)
+      break
+    case 'game_results':
+      onGameResults(message)
       break
 
     default:
@@ -97,6 +102,19 @@ function onQuestionResults(message: {
   console.log('Question results', message)
 }
 
+function onGameResults(message: { type: 'game_results'; rank: number; score: number }) {
+  changeStatus('game_results')
+  player.update(
+    (player) =>
+      player && {
+        ...player,
+        rank: message.rank,
+        score: message.score,
+      },
+  )
+  console.log('Game results', message)
+}
+
 export function answerQuestion(answer_id: string) {
   const ws = get(player)?.ws
   if (!ws) return
@@ -120,6 +138,7 @@ export function joinGame(code: string, name: string) {
       status: 'waiting_for_start',
       current_question: null,
       question_results: null,
+      rank: null,
       score: 0,
     })
 
