@@ -2,37 +2,20 @@ from __future__ import annotations
 
 import secrets
 from asyncio import sleep, get_running_loop, Future, timeout
-from dataclasses import dataclass, field
 from datetime import datetime, timezone, timedelta
 from enum import StrEnum
 from math import floor
 from typing import TYPE_CHECKING
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from quizquest.message import Message
+from quizquest.quiz import Question, QuestionAnswer, Quiz
 
 if TYPE_CHECKING:
     from quizquest.manager import Manager
     from quizquest.player import Player
 
 games = {}
-
-
-@dataclass
-class QuestionAnswer:
-    id: UUID
-    text: str
-    correct: bool
-    players_answered: set[UUID] = field(default_factory=set)
-
-
-@dataclass
-class Question:
-    id: UUID
-    text: str
-    answers: list[QuestionAnswer]
-    time_limit: int
-    player_answers: dict[UUID, tuple[QuestionAnswer, datetime]] = field(default_factory=dict)  # player: answer
 
 
 class GameStatus(StrEnum):
@@ -48,33 +31,13 @@ def _calculate_score(elapsed_time: timedelta, time_limit: timedelta):
 
 
 class Game:
-    def __init__(self) -> None:
+    def __init__(self, quiz: Quiz) -> None:
         self.code = secrets.randbelow(900000) + 100000
         self.manager: Manager | None = None
         self.players: dict[UUID, Player] = {}
         self.status = 'waiting_for_start'
-        self.questions: list[Question] = [
-            Question(uuid4(), 'What is 2 + 2?', [
-                QuestionAnswer(uuid4(), '1', correct=False),
-                QuestionAnswer(uuid4(), '20', correct=False),
-                QuestionAnswer(uuid4(), '4', correct=True),
-                QuestionAnswer(uuid4(), '-1', correct=False),
-                QuestionAnswer(uuid4(), '5', correct=False),
-                QuestionAnswer(uuid4(), '5', correct=False),
-            ], time_limit=10),
-            Question(uuid4(), 'What is the derivative of ln x?', [
-                QuestionAnswer(uuid4(), 'ln(ln(x)', correct=False),
-                QuestionAnswer(uuid4(), 'x^2', correct=False),
-                QuestionAnswer(uuid4(), 'x^x', correct=False),
-                QuestionAnswer(uuid4(), '1/x', correct=True),
-            ], time_limit=20),
-            Question(uuid4(), 'What is the derivative of x^2?', [
-                QuestionAnswer(uuid4(), 'ln(x)', correct=False),
-                QuestionAnswer(uuid4(), '2x^2', correct=False),
-                QuestionAnswer(uuid4(), '2x', correct=True),
-                QuestionAnswer(uuid4(), 'x^3/3', correct=False),
-            ], time_limit=20),
-        ]
+        self.questions = quiz.questions
+        self.default_time_limit = quiz.default_time_limit
         self._current_question_id = 0
         self._all_players_answered: Future | None = None
 
@@ -106,6 +69,9 @@ class Game:
 
     async def start_question(self) -> None:
         question = self.current_question
+        time_limit = (
+            self.default_time_limit if question.time_limit is None else question.time_limit
+        )
 
         # Show Question
         self.status = GameStatus.show_question
@@ -120,7 +86,7 @@ class Game:
                         'id': answer.id, 'text': answer.text, 'correct': answer.correct
                     } for answer in question.answers
                 ],
-                'time_limit': question.time_limit,
+                'time_limit': time_limit,
             }
         }))
 
@@ -146,7 +112,7 @@ class Game:
         start_time = datetime.now(timezone.utc)
         self._all_players_answered = get_running_loop().create_future()
         try:
-            async with timeout(question.time_limit):
+            async with timeout(time_limit):
                 await self._all_players_answered
         except TimeoutError:
             pass
@@ -166,7 +132,7 @@ class Game:
                 correct = chosen_answer.correct
                 elapsed_time = time_answered - start_time
                 score_gained = _calculate_score(
-                    elapsed_time, timedelta(seconds=1) * question.time_limit
+                    elapsed_time, timedelta(seconds=1) * time_limit
                 ) if correct else 0
 
             new_score = player.score = player.score + score_gained

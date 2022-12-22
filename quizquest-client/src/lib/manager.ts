@@ -138,14 +138,14 @@ function onGameResults(message: {
   )
 }
 
-export function startGame() {
+export function startGame(quizId: string) {
   return new Promise((resolve, reject) => {
     console.log({ manager: get(manager) })
     if (get(manager) !== null) {
       return resolve(null)
     }
 
-    const ws = new WebSocket(`${PUBLIC_GAME_URL}/start`)
+    const ws = new WebSocket(`${PUBLIC_GAME_URL}/start?quiz_id=${quizId}`)
 
     const onInitialMessage = (event: MessageEvent) => {
       ws.removeEventListener('message', onInitialMessage)
@@ -166,12 +166,14 @@ export function startGame() {
       } else if (data.type === 'error') {
         return reject(data.code)
       }
+      // We don't know how to handle an initial message which isn't 'game_created' or 'error'
       return reject('unknown_error')
     }
     ws.addEventListener('message', onInitialMessage)
     ws.addEventListener('close', () => {
+      console.info('Connection closed')
       manager.set(null)
-      goto('/')
+      goto('/start')
     })
   })
 }
@@ -204,6 +206,4 @@ export function skipQuestion() {
 
 export function endGame() {
   get(manager)?.ws.close()
-  manager.set(null)
-  goto('/')
 }

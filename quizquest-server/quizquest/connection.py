@@ -1,5 +1,6 @@
 from typing import cast
 from urllib.parse import urlparse, parse_qsl
+from uuid import uuid4
 
 from websockets.server import WebSocketServerProtocol
 
@@ -8,12 +9,12 @@ from quizquest.game import games, Game, GameStatus
 from quizquest.manager import Manager
 from quizquest.message import Message
 from quizquest.player import Player, validate_name
+from quizquest.quiz import Question, QuestionAnswer, get_firestore, get_quiz
 
 
 async def handle_connection(ws: WebSocketServerProtocol) -> None:
     url = urlparse(ws.path)
     path = url.path
-    print(ws.path)
     query = cast(dict[str, str], dict(parse_qsl(url.query)))
     match path:
         case '/join':
@@ -28,7 +29,11 @@ async def handle_connection(ws: WebSocketServerProtocol) -> None:
                 return await send_error(ws, 'invalid_name')
             await handle_player_connection(ws, code, name)
         case '/start':
-            await handle_manager_connection(ws)
+            try:
+                quiz_id = query['quiz_id']
+            except KeyError:
+                return await send_error(ws, 'invalid_quiz_id')
+            await handle_manager_connection(ws, quiz_id)
         case _:
             await send_error(ws, 'invalid_path')
 
@@ -60,8 +65,10 @@ async def handle_player_connection(ws: WebSocketServerProtocol, code: int, name:
         game.on_player_leave(player.id)
 
 
-async def handle_manager_connection(ws: WebSocketServerProtocol) -> None:
-    game = Game()
+async def handle_manager_connection(ws: WebSocketServerProtocol, quiz_id: str) -> None:
+    quiz = get_quiz(quiz_id)
+    
+    game = Game(quiz)
     code = game.code
     games[code] = game
     manager = Manager(ws, game)
