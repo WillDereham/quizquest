@@ -1,6 +1,5 @@
 from typing import cast
 from urllib.parse import urlparse, parse_qsl
-from uuid import uuid4
 
 from websockets.server import WebSocketServerProtocol
 
@@ -9,7 +8,7 @@ from quizquest.game import games, Game, GameStatus
 from quizquest.manager import Manager
 from quizquest.message import Message
 from quizquest.player import Player, validate_name
-from quizquest.quiz import Question, QuestionAnswer, get_firestore, get_quiz
+from quizquest.quiz import get_quiz
 
 
 async def handle_connection(ws: WebSocketServerProtocol) -> None:
@@ -66,8 +65,8 @@ async def handle_player_connection(ws: WebSocketServerProtocol, code: int, name:
 
 
 async def handle_manager_connection(ws: WebSocketServerProtocol, quiz_id: str) -> None:
-    quiz = get_quiz(quiz_id)
-    
+    quiz = await get_quiz(quiz_id)
+
     game = Game(quiz)
     code = game.code
     games[code] = game

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from asyncio import get_event_loop
 from dataclasses import dataclass, field
 from datetime import datetime
 from functools import lru_cache
@@ -53,9 +54,6 @@ class Quiz:
         return cls(id=quiz_id, default_time_limit=data['default_time_limit'], questions=questions)
 
 
-# executor = ThreadPoolExecutor(max_workers=4)
-
-
 @lru_cache(maxsize=1)
 def get_firestore() -> firestore_v1.client.Client:
     # TODO: fix blocking calls
@@ -64,7 +62,7 @@ def get_firestore() -> firestore_v1.client.Client:
     return db
 
 
-def get_quiz(quiz_id: str):
+def _get_quiz(quiz_id: str) -> Quiz:
     db = get_firestore()
     quiz_ref = db.collection('quizzes').document(quiz_id)
     quiz = quiz_ref.get()
@@ -72,3 +70,8 @@ def get_quiz(quiz_id: str):
         raise KeyError("Quiz not found")
 
     return Quiz.from_dict(quiz_id, quiz.to_dict())
+
+
+async def get_quiz(quiz_id: str) -> Quiz:
+    loop = get_event_loop()
+    return await loop.run_in_executor(None, _get_quiz, quiz_id)
