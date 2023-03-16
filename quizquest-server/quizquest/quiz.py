@@ -3,13 +3,18 @@ from __future__ import annotations
 from asyncio import get_event_loop
 from dataclasses import dataclass, field
 from datetime import datetime
-from functools import lru_cache
-from typing import Self
+from functools import wraps
+from random import shuffle, sample
+from typing import Self, TypeAlias, Callable, Coroutine, TypeVar, ParamSpec
 from uuid import UUID
 
 import firebase_admin
 from firebase_admin import firestore
 from google.cloud import firestore_v1
+
+from quizquest.utils import asyncify, shuffled
+
+FirestoreDB: TypeAlias = firestore_v1.client.Client
 
 
 @dataclass
@@ -36,7 +41,10 @@ class Quiz:
     questions: list[Question]
 
     @classmethod
-    def from_dict(cls, quiz_id: str, data: dict) -> Self:
+    def from_dict(
+            cls, quiz_id: str, data: dict, randomise_question_order: bool,
+            randomise_answer_order: bool
+    ) -> Self:
         questions = [
             Question(
                 id=UUID(question['id']),
@@ -47,31 +55,36 @@ class Quiz:
                         id=UUID(answer['id']),
                         text=answer['text'],
                         correct=answer['correct'],
-                    ) for answer in question['answers']
+                    ) for answer in (
+                        shuffled(question['answers'])
+                        if randomise_answer_order else question['answers']
+                    )
                 ],
-            ) for question in data['questions']
+            ) for question in (
+                shuffled(data['questions']) if randomise_question_order else data['questions']
+            )
         ]
         return cls(id=quiz_id, default_time_limit=data['default_time_limit'], questions=questions)
 
 
-@lru_cache(maxsize=1)
-def get_firestore() -> firestore_v1.client.Client:
+def get_firestore() -> FirestoreDB:
     # TODO: fix blocking calls
     app = firebase_admin.initialize_app()
     db = firestore.client(app)
     return db
 
 
-def _get_quiz(quiz_id: str) -> Quiz:
-    db = get_firestore()
+def _get_quiz(
+        db: FirestoreDB, quiz_id: str, randomise_question_order: bool, randomise_answer_order: bool
+) -> Quiz:
     quiz_ref = db.collection('quizzes').document(quiz_id)
     quiz = quiz_ref.get()
     if not quiz.exists:
         raise KeyError("Quiz not found")
 
-    return Quiz.from_dict(quiz_id, quiz.to_dict())
+    return Quiz.from_dict(
+        quiz_id, quiz.to_dict(), randomise_question_order, randomise_answer_order
+    )
 
 
-async def get_quiz(quiz_id: str) -> Quiz:
-    loop = get_event_loop()
-    return await loop.run_in_executor(None, _get_quiz, quiz_id)
+get_quiz = asyncify(_get_quiz)

@@ -138,14 +138,27 @@ function onGameResults(message: {
   )
 }
 
-export function startGame(quizId: string) {
+export function startGame({
+  quizId,
+  randomiseQuestionOrder,
+  randomiseAnswerOrder,
+}: {
+  quizId: string
+  randomiseQuestionOrder: boolean
+  randomiseAnswerOrder: boolean
+}) {
   return new Promise((resolve, reject) => {
     console.log({ manager: get(manager) })
     if (get(manager) !== null) {
       return resolve(null)
     }
 
-    const ws = new WebSocket(`${PUBLIC_GAME_URL}/start?quiz_id=${quizId}`)
+    const params = new URLSearchParams({
+      quiz_id: quizId,
+      randomise_question_order: randomiseQuestionOrder,
+      randomise_answer_order: randomiseAnswerOrder,
+    })
+    const ws = new WebSocket(`${PUBLIC_GAME_URL}/start?${params}`)
 
     const onInitialMessage = (event: MessageEvent) => {
       ws.removeEventListener('message', onInitialMessage)

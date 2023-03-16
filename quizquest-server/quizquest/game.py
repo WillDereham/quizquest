@@ -48,6 +48,7 @@ class Game:
     def on_player_leave(self, player_id: UUID) -> None:
         self.manager.send_message(Message({'type': 'player_left', 'player_id': player_id}))
         del self.players[player_id]
+        self.end_question_if_answered()
 
     def on_player_join(self, player: Player) -> None:
         self.players[player.id] = player
@@ -154,22 +155,23 @@ class Game:
             'leaderboard': self._get_leaderboard(length=5),
         }))
 
-    def _get_leaderboard(self, length: int):
+    def _get_leaderboard(self, length: int) -> list[dict]:
         return sorted([
             {'id': user.id, 'name': user.name, 'score': user.score}
             for user in self.players.values()
         ], key=lambda u: u['score'], reverse=True)[:length]
 
-    async def next_question(self):
-        if self._current_question_id + 1 >= len(self.questions):
-            return self.manager.send_error('game_ended')
+    async def next_question(self) -> None:
+        if self._current_question_id + 1 >= len(self.questions) or not len(self.players):
+            self.game_results()
+            return
         self._current_question_id += 1
         await self.start_question()
 
-    async def skip_question(self):
+    def skip_question(self) -> None:
         self._all_players_answered.set_result(None)
 
-    async def game_results(self):
+    def game_results(self) -> None:
         for index, player in enumerate(sorted(
                 self.players.values(), key=lambda p: p.score, reverse=True
         )):
@@ -184,18 +186,21 @@ class Game:
             'leaderboard': self._get_leaderboard(length=3),
         }))
 
-    async def on_question_answered(self, player: Player, answer: QuestionAnswer):
+    def on_question_answered(self, player: Player, answer: QuestionAnswer):
         question = self.current_question
 
         question.player_answers[player.id] = (answer, datetime.now(timezone.utc))
         answer.players_answered.add(player.id)
 
-        # If all players have answered the question
-        # Checks if is a superset, because a user could leave before the question is over
-        if set(question.player_answers.keys()) >= set(self.players.keys()):
-            self._all_players_answered.set_result(None)
+        self.end_question_if_answered()
 
         player.send_message(Message({'type': 'question_answered'}))
         # self.manager.send_message(Message({
         #     'type': 'question_answered', 'player_id': player.id, 'answer_id': answer.id
         # }))
+
+    def end_question_if_answered(self):
+        # Checks if is a superset, because a user could leave before the question is over
+        # TODO: set conversion will be expensive, look for ways to optimise
+        if set(self.current_question.player_answers.keys()) >= set(self.players.keys()):
+            self._all_players_answered.set_result(None)

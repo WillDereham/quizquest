@@ -1,3 +1,12 @@
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  getFirestore,
+  orderBy,
+  query,
+} from 'firebase/firestore/lite'
 import { initializeApp, type FirebaseApp } from 'firebase/app'
 
 const firebaseConfig = {
@@ -15,14 +24,37 @@ export interface Quiz {
   id: string
   title: string
   description: string
-  default_time_limit: string
+  default_time_limit: number
   created_at: { seconds: number; nanoseconds: number }
   last_updated: { seconds: number; nanoseconds: number }
   questions: unknown[]
 }
 
-export function getApp(): FirebaseApp {
+export interface Question {
+  id: string
+  text: string
+  time_limit: string | null
+  answers: { id: string; correct: boolean; text: string }[]
+}
+
+function getApp(): FirebaseApp {
   if (app) return app
   app = initializeApp(firebaseConfig)
   return app
+}
+
+export async function getQuiz(quizId: string): Quiz | null {
+  const app = getApp()
+  const db = getFirestore(app)
+  const quizSnap = await getDoc(doc(db, 'quizzes', quizId))
+  return quizSnap.exists() ? ({ id: quizSnap.id, ...quizSnap.data() } as Quiz) : null
+}
+
+export async function getQuizList(): Quiz[] {
+  const app = getApp()
+  const db = getFirestore(app)
+  const quizzes = await (
+    await getDocs(query(collection(db, 'quizzes'), orderBy('last_updated', 'desc')))
+  ).docs.map((doc) => ({ id: doc.id, ...doc.data() } as Quiz))
+  return quizzes
 }

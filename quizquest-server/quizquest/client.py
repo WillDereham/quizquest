@@ -1,6 +1,6 @@
 from asyncio import Queue, TaskGroup, Task
 from functools import wraps
-from typing import Callable
+from typing import Callable, TypeVar, ParamSpec, Concatenate
 
 from websockets.exceptions import ConnectionClosed
 from websockets.legacy.server import WebSocketServerProtocol
@@ -66,11 +66,16 @@ async def send_error(ws: WebSocketServerProtocol, code: str, **kwargs) -> None:
     print(f'Sending error: {code}')
     await _send_message(ws, Message({'type': 'error', 'code': code} | kwargs))
 
+P = ParamSpec('P')
+T = TypeVar('T')
+Wrapped = Callable[Concatenate[Client, P], T]
 
-def require_game_status(state: GameStatus):
-    def decorator(func: Callable):
+
+# TODO: type annotations
+def require_game_status(state: GameStatus) -> Callable[[Wrapped], Wrapped]:
+    def decorator(func: Wrapped) -> Wrapped:
         @wraps(func)
-        async def wrapper(self: Client, *args, **kwargs):
+        async def wrapper(self: Client, *args: P.args, **kwargs: P.kwargs) -> T:
             if self.game.status != state:
                 return self.send_error('invalid_game_status')
             return await func(self, *args, **kwargs)

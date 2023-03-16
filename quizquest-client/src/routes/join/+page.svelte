@@ -2,9 +2,8 @@
   import { goto } from '$app/navigation'
   import { player, joinGame } from '$lib/player'
   import { onMount } from 'svelte'
-  import Fa from 'svelte-fa'
-  import { faArrowLeft } from '@fortawesome/free-solid-svg-icons'
   import { page } from '$app/stores'
+  import BackArrow from '$lib/BackArrow.svelte'
 
   let code = $page.url.searchParams.get('code') || ''
   $: code = code.replaceAll(/\D+/g, '').substring(0, 6)
@@ -35,7 +34,7 @@
 
 <div class="h-full flex flex-col">
   <div class="flex">
-    <a href="/" class="p-6"><Fa icon={faArrowLeft} size="lg" /></a>
+    <BackArrow href="/" />
   </div>
   <div class="flex items-center justify-center grow">
     <div class="flex flex-col items-center p-4 gap-4">

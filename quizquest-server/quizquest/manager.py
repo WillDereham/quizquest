@@ -51,8 +51,8 @@ class Manager(Client):
 
     @require_game_status(GameStatus.collect_answers)
     async def handle_skip_question(self) -> None:
-        await self.game.skip_question()
+        self.game.skip_question()
 
     @require_game_status(GameStatus.question_results)
     async def handle_game_results(self) -> None:
-        await self.game.game_results()
+        self.game.game_results()
