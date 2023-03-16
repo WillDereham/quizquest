@@ -9,3 +9,4 @@ export const load = (async ({ params: { quizId } }) => {
 }) satisfies PageLoad
 
 export const ssr = false
+export const prerender = false
