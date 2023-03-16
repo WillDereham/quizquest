@@ -62,4 +62,4 @@ class Player(Client):
         if answer is None:
             return self.send_error('invalid_answer_id')
 
-        await self.game.on_question_answered(self, answer)
+        self.game.on_question_answered(self, answer)
