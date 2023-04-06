@@ -21,7 +21,7 @@ async def main() -> None:
     stop = loop.create_future()
     loop.add_signal_handler(SIGTERM, stop.set_result, None)
 
-    db = get_firestore()
+    db = await get_firestore()
     async with websockets.serve(lambda ws: handle_connection(ws, db), ['127.0.0.1', '::1'], port):
         print(f'Server listening on port {port}')
         await stop

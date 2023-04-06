@@ -67,11 +67,14 @@ class Quiz:
         return cls(id=quiz_id, default_time_limit=data['default_time_limit'], questions=questions)
 
 
-def get_firestore() -> FirestoreDB:
+def _get_firestore() -> FirestoreDB:
     # TODO: fix blocking calls
     app = firebase_admin.initialize_app()
     db = firestore.client(app)
     return db
+
+
+get_firestore = asyncify(_get_firestore)
 
 
 def _get_quiz(

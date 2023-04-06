@@ -55,6 +55,7 @@ class Player(Client):
         question = self.game.current_question
         if self.id in question.player_answers:
             return self.send_error('already_answered')
+        # TODO: use ordereddict for question.answers
         answer = next(
             (answer for answer in question.answers if answer.id == answer_id),
             None

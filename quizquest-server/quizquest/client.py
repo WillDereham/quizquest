@@ -71,7 +71,6 @@ T = TypeVar('T')
 Wrapped = Callable[Concatenate[Client, P], T]
 
 
-# TODO: type annotations
 def require_game_status(state: GameStatus) -> Callable[[Wrapped], Wrapped]:
     def decorator(func: Wrapped) -> Wrapped:
         @wraps(func)

@@ -35,7 +35,7 @@ class Game:
         self.code = secrets.randbelow(900000) + 100000
         self.manager: Manager | None = None
         self.players: dict[UUID, Player] = {}
-        self.status = 'waiting_for_start'
+        self.status = GameStatus.waiting_for_start
         self.questions = quiz.questions
         self.default_time_limit = quiz.default_time_limit
         self._current_question_id = 0
@@ -48,7 +48,8 @@ class Game:
     def on_player_leave(self, player_id: UUID) -> None:
         self.manager.send_message(Message({'type': 'player_left', 'player_id': player_id}))
         del self.players[player_id]
-        self.end_question_if_answered()
+        if self.status == GameStatus.collect_answers:
+            self.end_question_if_answered()
 
     def on_player_join(self, player: Player) -> None:
         self.players[player.id] = player
@@ -201,6 +202,5 @@ class Game:
 
     def end_question_if_answered(self):
         # Checks if is a superset, because a user could leave before the question is over
-        # TODO: set conversion will be expensive, look for ways to optimise
-        if set(self.current_question.player_answers.keys()) >= set(self.players.keys()):
+        if self.current_question.player_answers.keys() >= self.players.keys():
             self._all_players_answered.set_result(None)

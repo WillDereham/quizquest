@@ -20,7 +20,6 @@ async def handle_connection(ws: WebSocketServerProtocol, db: FirestoreDB) -> Non
             try:
                 code = int(query['code'])
             except (KeyError, ValueError):
-                print(f'invalid code: {query}')
                 return await send_error(ws, 'invalid_code')
             try:
                 name = query['name']
