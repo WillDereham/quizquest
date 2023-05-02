@@ -53,7 +53,8 @@ async def handle_player_connection(ws: WebSocketServerProtocol, code: int, name:
     if game.status != GameStatus.waiting_for_start:
         return await send_error(ws, 'game_already_started')
 
-    if len({player for player in game.players.values() if player.name == name}):
+    lower_name = name.lower()
+    if len({player for player in game.players.values() if player.name.lower() == lower_name}):
         return await send_error(ws, 'name_taken')
 
     player = Player(ws, game, name)
