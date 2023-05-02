@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from quizquest.manager import Manager
     from quizquest.player import Player
 
-games = {}
+games: dict[int, Game] = {}
 
 
 class GameStatus(StrEnum):
